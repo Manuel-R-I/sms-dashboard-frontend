@@ -1,16 +1,54 @@
-# React + Vite
+Welcome to SMS Security Web Dashboard 🛡️
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This is a React project built with Vite and Tailwind CSS for the SMS Security / AntiFraude SMS administrative monitoring dashboard.
 
-Currently, two official plugins are available:
+Get started
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+1. Install dependencies
 
-## React Compiler
+   ```bash
+   npm install
+   ```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
 
-## Expanding the ESLint configuration
+2. Start the development server
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+    ```bash
+    npm run dev
+    ```
+
+In the output, you'll find the local web server URL (usually http://localhost:5173).
+
+You can start developing by editing the main application files inside the src directory, primarily src/App.jsx.
+
+Key Features
+
+Real-time KPI Monitoring: Tracks total analyzed SMS, high-risk smishing detections, pending user reports, and suspicious domains.
+
+Smishing Categorization: Visual breakdown of threat patterns targeting users in Chile (Banks, Couriers, Public Services, Social Networks).
+
+Interactive Audit Table: Review reports submitted from the mobile app and approve or discard classifications to improve detection models.
+
+Available Scripts
+
+npm run dev - Starts the Vite development server with Hot Module Replacement (HMR).
+
+npm run build - Compiles and bundles the application for production deployment.
+
+npm run preview - Serves the production build locally for testing.
+
+Backend Integration
+
+This web interface connects to the sms-dashboard-api service (Node.js/Express + MongoDB) to synchronize metrics and user reports in real time.
+
+Learn more
+
+To learn more about the frontend stack used in this project:
+
+Vite Documentation: Learn about Vite configuration, plugins, and performance.
+
+React Documentation: Explore React components, state management, and hooks.
+
+Tailwind CSS Documentation: Learn about utility-first CSS styling.
+
+Lucide Icons: Explore the icon set used throughout the dashboard interface.
