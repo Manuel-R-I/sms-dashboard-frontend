@@ -7,6 +7,8 @@ import {
   actualizarReporte,
   eliminarReporte
 } from '../lib/api';
+import { estiloRiesgo, obtenerNivelRiesgo } from '../lib/riesgo';
+
 
 const ETIQUETA_ESTADO = {
   pendiente: {
@@ -159,11 +161,17 @@ export default function ReportesView() {
                     </td>
 
                     <td className="p-4 whitespace-nowrap">
-                      <span className="px-2.5 py-1 rounded font-mono font-bold bg-red-950 text-red-400 border border-red-800/60 text-[10px]">
-                        {rep.score_riesgo ?? '-'}/100{' '}
-                        {rep.nivel_riesgo?.toUpperCase()}
-                      </span>
+                      {(() => {
+                        const est = estiloRiesgo(rep.score_riesgo);
+                        const nivel = obtenerNivelRiesgo(rep.score_riesgo);
+                        return (
+                          <span className={`px-2.5 py-1 rounded font-mono font-bold border text-[10px] ${est.chip}`}>
+                            {rep.score_riesgo ?? '-'}/100 {nivel ? nivel.toUpperCase() : ''}
+                          </span>
+                        );
+                      })()}
                     </td>
+
 
                     <td className="p-4">
                       <span

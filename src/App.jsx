@@ -27,7 +27,7 @@ function Shell() {
             </p>
           }
         >
-          {vista === 'dashboard' && <DashboardView />}
+          {vista === 'dashboard' && <DashboardView onIrARepotes={() => setVista('reportes')} />}
           {vista === 'reportes' && <ReportesView />}
           {vista === 'usuarios' && <UsuariosView />}
         </Suspense>
