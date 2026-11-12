@@ -1,6 +1,5 @@
-
 import { useEffect, useState } from 'react';
-import { Search, CheckCircle, XCircle, Trash2 } from 'lucide-react';
+import { Search, CheckCircle, XCircle, Trash2, RotateCcw } from 'lucide-react';
 import { useAuth } from '../context/useAuth';
 import {
   obtenerReportes,
@@ -8,7 +7,6 @@ import {
   eliminarReporte
 } from '../lib/api';
 import { estiloRiesgo, obtenerNivelRiesgo } from '../lib/riesgo';
-
 
 const ETIQUETA_ESTADO = {
   pendiente: {
@@ -32,6 +30,11 @@ export default function ReportesView() {
   const [cargando, setCargando] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [accionando, setAccionando] = useState(null);
+
+  // Nuevos estados para filtros y orden
+  const [filtroEstado, setFiltroEstado] = useState('todos');
+  const [filtroRiesgo, setFiltroRiesgo] = useState('todos');
+  const [ordenFecha, setOrdenFecha] = useState('recientes');
 
   const cargar = async () => {
     setCargando(true);
@@ -93,37 +96,140 @@ export default function ReportesView() {
     }
   };
 
-  const filtrados = reportes.filter((r) =>
-    r.mensaje?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    r.empresa_mencionada?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    r._id?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const limpiarFiltros = () => {
+    setSearchTerm('');
+    setFiltroEstado('todos');
+    setFiltroRiesgo('todos');
+    setOrdenFecha('recientes');
+  };
+
+  const hayFiltrosActivos =
+    searchTerm !== '' ||
+    filtroEstado !== 'todos' ||
+    filtroRiesgo !== 'todos' ||
+    ordenFecha !== 'recientes';
+
+  // Filtrado combinado + Ordenamiento por fecha
+  const filtrados = reportes
+    .filter((r) => {
+      // 1. Búsqueda por texto
+      const coincideTexto =
+        r.mensaje?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        r.empresa_mencionada?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        r._id?.toLowerCase().includes(searchTerm.toLowerCase());
+
+      if (!coincideTexto) return false;
+
+      // 2. Filtro por estado
+      const estadoActual = r.estado || 'pendiente';
+      if (filtroEstado !== 'todos' && estadoActual !== filtroEstado) {
+        return false;
+      }
+
+      // 3. Filtro por nivel de riesgo (normalizado a minúsculas)
+      if (filtroRiesgo !== 'todos') {
+        const nivel = obtenerNivelRiesgo(r.score_riesgo)?.toLowerCase();
+        if (nivel !== filtroRiesgo) return false;
+      }
+
+      return true;
+    })
+    .sort((a, b) => {
+      const fechaA = new Date(a.fecha_reporte).getTime();
+      const fechaB = new Date(b.fecha_reporte).getTime();
+      return ordenFecha === 'recientes' ? fechaB - fechaA : fechaA - fechaB;
+    });
 
   return (
     <div className="w-full">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <h1 className="text-2xl font-bold tracking-tight text-white">
-          Reportes
-        </h1>
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold tracking-tight text-white">
+            Reportes
+          </h1>
+          <span className="text-xs font-mono bg-slate-900 text-slate-400 border border-slate-800 px-2.5 py-0.5 rounded-full">
+            {filtrados.length}
+          </span>
+        </div>
 
-        <div className="relative">
-          <Search className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
+        {/* Barra de búsqueda y filtros */}
+        <div className="flex flex-wrap items-center gap-2.5">
+          {/* Buscador */}
+          <div className="relative flex-grow sm:flex-grow-0">
+            <Search className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
+            <input
+              type="text"
+              placeholder="Buscar empresa, mensaje o id..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="bg-slate-950 text-slate-200 border border-slate-800 text-xs pl-9 pr-4 py-2 rounded-xl focus:outline-none focus:border-emerald-500 w-full sm:w-64"
+            />
+          </div>
 
-          <input
-            type="text"
-            placeholder="Buscar por empresa, mensaje o id..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="bg-slate-950 text-slate-200 border border-slate-800 text-xs pl-9 pr-4 py-2 rounded-xl focus:outline-none focus:border-emerald-500 w-full sm:w-80"
-          />
+          {/* Filtro por Riesgo */}
+          <select
+            value={filtroRiesgo}
+            onChange={(e) => setFiltroRiesgo(e.target.value)}
+            className="bg-slate-950 text-slate-300 border border-slate-800 text-xs px-3 py-2 rounded-xl focus:outline-none focus:border-emerald-500 cursor-pointer"
+          >
+            <option value="todos">Riesgo: Todos</option>
+            <option value="alto">Riesgo Alto</option>
+            <option value="medio">Riesgo Medio</option>
+            <option value="bajo">Riesgo Bajo</option>
+          </select>
+
+          {/* Filtro por Estado */}
+          <select
+            value={filtroEstado}
+            onChange={(e) => setFiltroEstado(e.target.value)}
+            className="bg-slate-950 text-slate-300 border border-slate-800 text-xs px-3 py-2 rounded-xl focus:outline-none focus:border-emerald-500 cursor-pointer"
+          >
+            <option value="todos">Estado: Todos</option>
+            <option value="pendiente">Pendiente</option>
+            <option value="confirmado_smishing">Confirmado</option>
+            <option value="falso_positivo">Falso Positivo</option>
+          </select>
+
+          {/* Orden por Tiempo */}
+          <select
+            value={ordenFecha}
+            onChange={(e) => setOrdenFecha(e.target.value)}
+            className="bg-slate-950 text-slate-300 border border-slate-800 text-xs px-3 py-2 rounded-xl focus:outline-none focus:border-emerald-500 cursor-pointer"
+          >
+            <option value="recientes">Más recientes primero</option>
+            <option value="antiguos">Más antiguos primero</option>
+          </select>
+
+          {/* Botón Reset */}
+          {hayFiltrosActivos && (
+            <button
+              onClick={limpiarFiltros}
+              title="Limpiar filtros"
+              className="bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-800 p-2 rounded-xl transition-colors"
+            >
+              <RotateCcw className="w-4 h-4" />
+            </button>
+          )}
         </div>
       </div>
 
       <div className="bg-slate-900/80 border border-slate-800/80 rounded-2xl shadow-lg overflow-x-auto">
         {cargando ? (
-          <p className="p-6 text-sm text-slate-400">
-            Cargando...
-          </p>
+          <p className="p-6 text-sm text-slate-400">Cargando...</p>
+        ) : filtrados.length === 0 ? (
+          <div className="p-10 text-center">
+            <p className="text-sm text-slate-400">
+              No se encontraron reportes con los filtros seleccionados.
+            </p>
+            {hayFiltrosActivos && (
+              <button
+                onClick={limpiarFiltros}
+                className="mt-3 text-xs text-emerald-400 hover:text-emerald-300 underline"
+              >
+                Restablecer filtros
+              </button>
+            )}
+          </div>
         ) : (
           <table className="w-full text-left text-xs text-slate-300">
             <thead className="bg-slate-950 text-slate-400 uppercase tracking-wider text-[10px] border-b border-slate-800">
@@ -132,15 +238,16 @@ export default function ReportesView() {
                 <th className="p-4">Mensaje</th>
                 <th className="p-4">Score</th>
                 <th className="p-4">Estado</th>
-                <th className="p-4 text-right">Accion</th>
+                <th className="p-4 text-right">Acción</th>
               </tr>
             </thead>
 
             <tbody className="divide-y divide-slate-800/60">
               {filtrados.map((rep) => {
                 const estado =
-                  ETIQUETA_ESTADO[rep.estado] ||
-                  ETIQUETA_ESTADO.pendiente;
+                  ETIQUETA_ESTADO[rep.estado] || ETIQUETA_ESTADO.pendiente;
+                const est = estiloRiesgo(rep.score_riesgo);
+                const nivel = obtenerNivelRiesgo(rep.score_riesgo);
 
                 return (
                   <tr
@@ -155,23 +262,17 @@ export default function ReportesView() {
                       <p className="font-semibold text-slate-200">
                         {rep.empresa_mencionada}
                       </p>
-                      <p className="text-slate-400">
-                        {rep.mensaje}
-                      </p>
+                      <p className="text-slate-400">{rep.mensaje}</p>
                     </td>
 
                     <td className="p-4 whitespace-nowrap">
-                      {(() => {
-                        const est = estiloRiesgo(rep.score_riesgo);
-                        const nivel = obtenerNivelRiesgo(rep.score_riesgo);
-                        return (
-                          <span className={`px-2.5 py-1 rounded font-mono font-bold border text-[10px] ${est.chip}`}>
-                            {rep.score_riesgo ?? '-'}/100 {nivel ? nivel.toUpperCase() : ''}
-                          </span>
-                        );
-                      })()}
+                      <span
+                        className={`px-2.5 py-1 rounded font-mono font-bold border text-[10px] ${est.chip}`}
+                      >
+                        {rep.score_riesgo ?? '-'}/100{' '}
+                        {nivel ? nivel.toUpperCase() : ''}
+                      </span>
                     </td>
-
 
                     <td className="p-4">
                       <span
