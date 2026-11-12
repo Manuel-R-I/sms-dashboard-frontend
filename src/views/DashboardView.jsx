@@ -73,7 +73,9 @@ export default function DashboardView({ onIrARepotes }) {
   const aplicarFiltroKpi = (lista) => {
     const id = filtroKpi?.id;
     if (id === 'total') return lista;
-    if (id === 'alto') return lista.filter((r) => r.nivel_riesgo === 'alto');
+    if (['alto', 'medio', 'bajo'].includes(id)) {
+      return lista.filter((r) => obtenerNivelRiesgo(r.score_riesgo) === id);
+    }
     if (id === 'pendientes') return lista.filter((r) => r.estado === 'pendiente');
     if (id === 'maliciosos') return lista.filter((r) => (r.analisis?.virustotal_maliciosos ?? 0) > 0);
     return lista;
