@@ -1,9 +1,14 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-const api = axios.create({ baseURL: `${API_BASE_URL}/api` });
+const API_BASE_URL = 'https://sms-security-backend.onrender.com';
 
-const withToken = (token) => ({ headers: { Authorization: `Bearer ${token}` } });
+const api = axios.create({ 
+  baseURL: `${API_BASE_URL}/api` 
+});
+
+const withToken = (token) => ({ 
+  headers: { Authorization: `Bearer ${token}` } 
+});
 
 export const solicitarOtp = (telefono) => api.post('/auth/solicitar-otp', { telefono }).then(r => r.data);
 export const verificarOtp = (telefono, codigo) => api.post('/auth/verificar-otp', { telefono, codigo }).then(r => r.data);
